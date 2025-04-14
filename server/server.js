@@ -1,12 +1,12 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
-const connectDB = require('./config/db');
+const { connectDB } = require('./config/db');
 const errorHandler = require('./middleware/error');
 const cron = require('node-cron');
 const { 
   processPreEnrollmentQueue,
-  processTeamCommissions, 
+  processTeamCommissions,
   processMegaMatchingBonuses,
   processLeadershipPool 
 } = require('./services/placement');
@@ -15,8 +15,23 @@ const {
 dotenv.config();
 
 // Connect to database
-connectDB();
-
+const connection = connectDB()
+  .then(conn => {
+    // Set up connection event handlers
+    conn.connection.on('error', err => {
+      console.error('MongoDB connection error:', err);
+    });
+    conn.connection.on('disconnected', () => {
+      console.warn('MongoDB disconnected. Attempting to reconnect...');
+    });
+    conn.connection.on('reconnected', () => {
+      console.log('MongoDB reconnected successfully');
+    });
+  })
+  .catch(err => {
+    console.error('Initial MongoDB connection failed:', err);
+    process.exit(1);
+  });
 const app = express();
 
 // Body parser

@@ -10,7 +10,10 @@ const PreEnrollment = require('./models/PreEnrollment');
 
 // Load environment variables
 dotenv.config();
-
+// Set required environment variables for testing if not present
+if (!process.env.JWT_SECRET) {
+  process.env.JWT_SECRET = 'test-jwt-secret-key-for-unit-tests';
+}
 // Connect to database
 mongoose
   .connect(process.env.MONGO_URI)
@@ -79,12 +82,15 @@ async function testUserModel() {
   
   // 1.3 Test user JWT token generation
   console.log('- Testing JWT token generation');
+  try {
   const token = savedUser.getSignedJwtToken();
   assert(token && typeof token === 'string', 'Should generate a JWT token');
   console.log('  ✓ JWT token generated correctly');
+  } catch (error) {
+    console.error('JWT Token Generation Error:', error);
+    throw error;
 }
-
-// 2. Team Structure Model Tests
+}
 async function testTeamStructureModel() {
   console.log('\nTesting Team Structure Model...');
   

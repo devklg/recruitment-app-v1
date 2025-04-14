@@ -143,10 +143,14 @@ UserSchema.pre('save', async function(next) {
 });
 
 // Sign JWT and return
+// Sign JWT and return
 UserSchema.methods.getSignedJwtToken = function() {
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE
-  });
+  const expiresIn = process.env.JWT_EXPIRE || '30d'; // Add default fallback
+  if (!validateJwtExpire(expiresIn)) {
+    console.warn(`Invalid JWT_EXPIRE value: ${expiresIn}. Using default of 30d`);
+    return jwt.sign({ id: this._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+  }
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, { expiresIn });
 };
 
 // Match user entered password to hashed password in database
